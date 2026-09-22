@@ -1,5 +1,6 @@
 let initializeApp, getAuth, signInAnonymously, onAuthStateChanged;
 let getDatabase, ref, set, get, update, remove, onValue, onDisconnect, serverTimestamp;
+const BUILD_VERSION = '2026.09.22-step1';
 
 const $ = (id) => document.getElementById(id);
 const LS = {
@@ -72,14 +73,23 @@ function closeModal(){ $('modal-root').innerHTML=''; }
 function byId(selector){ return document.querySelector(selector); }
 
 // ---------- Firebase ----------
+function fileFirebaseConfig(){ return window.CLASSROOM_TYCOON_FIREBASE_CONFIG||{}; }
+function savedFirebaseConfig(){ return loadJSON(LS.firebaseConfig,{}); }
+function firebaseConfigMissing(c={}){
+  const required=['apiKey','projectId','databaseURL','appId'];
+  return required.filter(k=>!c?.[k] || String(c[k]).includes('PASTE_'));
+}
+function configLooksValid(c){ return firebaseConfigMissing(c||{}).length===0; }
 function effectiveFirebaseConfig(){
-  const fileConfig=window.CLASSROOM_TYCOON_FIREBASE_CONFIG||{};
+  const fileConfig=fileFirebaseConfig();
   if(configLooksValid(fileConfig)) return fileConfig;
-  const saved=loadJSON(LS.firebaseConfig,{});
+  const saved=savedFirebaseConfig();
   return configLooksValid(saved) ? saved : {};
 }
-function configLooksValid(c=effectiveFirebaseConfig()){
-  return !!(c && c.apiKey && !String(c.apiKey).includes('PASTE_') && c.projectId && !String(c.projectId).includes('PASTE_') && c.databaseURL && c.appId);
+function firebaseConfigSource(){
+  if(configLooksValid(fileFirebaseConfig())) return 'file';
+  if(configLooksValid(savedFirebaseConfig())) return 'local';
+  return 'none';
 }
 function parseFirebaseConfig(text){
   const keys=['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId','measurementId'];
@@ -97,6 +107,7 @@ function openFirebaseSetup(){
     <ol style="line-height:1.7"><li>Buat Firebase Project + Web App.</li><li>Aktifkan <b>Authentication → Anonymous</b>.</li><li>Buat <b>Realtime Database</b>, lalu salin ulang Web App config agar <code>databaseURL</code> ikut ada.</li><li>Tempel config di bawah, lalu klik Save.</li></ol>
     <label>Firebase config<textarea id="firebase-config-paste" rows="12" placeholder='const firebaseConfig = { apiKey: "...", authDomain: "...", databaseURL: "https://...firebasedatabase.app", projectId: "...", appId: "..." };'>${esc(sample)}</textarea></label>
     <div class="button-row"><button class="btn primary" id="firebase-config-save">SAVE & RELOAD</button><button class="btn outline" id="firebase-config-clear">CLEAR SAVED CONFIG</button></div>
+    <p class="setup-note"><b>Penting:</b> config yang disimpan dari form ini hanya tersimpan di browser ini. Untuk multiplayer dari HP/laptop lain, config yang sama harus dimasukkan ke file <code>firebase-config.js</code> di repository GitHub.</p>
     <p class="setup-note">Security Rules tetap harus dipasang dari file <code>database.rules.json</code> pada project ini.</p>`);
   $('firebase-config-save').onclick=()=>{
     const cfg=parseFirebaseConfig($('firebase-config-paste').value);
@@ -107,9 +118,14 @@ function openFirebaseSetup(){
 }
 async function initCloud(){
   const status=$('firebase-status');
-  if(!configLooksValid()){
-    status.innerHTML='⚙️ <b>Online Classroom belum terhubung.</b> Klik <b>SETUP ONLINE</b>, lalu tempel Firebase Web App config.';
+  const source=firebaseConfigSource();
+  if(source==='none'){
+    const missing=firebaseConfigMissing(fileFirebaseConfig());
+    status.innerHTML=`🔴 <b>Firebase belum terpasang di build GitHub.</b> Field belum valid: <code>${missing.join(', ')}</code>.`;
     $('btn-create-room').disabled=true; $('btn-join-room').disabled=true; return;
+  }
+  if(source==='local'){
+    status.innerHTML='🟡 <b>Firebase hanya tersimpan di browser ini.</b> Untuk room code lintas perangkat, masukkan config yang sama ke <code>firebase-config.js</code> di GitHub.';
   }
   try{
     if(!initializeApp){
@@ -128,12 +144,16 @@ async function initCloud(){
     await new Promise(resolve=>{
       const stop=onAuthStateChanged(cloud.auth,u=>{ if(u){cloud.user=u;cloud.ready=true;stop();resolve();} });
     });
-    status.innerHTML='🟢 <b>Online Classroom ready.</b> Room Code + live leaderboard aktif.';
+    if(source==='file'){
+      status.innerHTML='🟢 <b>Firebase Connected.</b> Config berasal dari build GitHub. Room Code + live leaderboard siap diuji.';
+    }else{
+      status.innerHTML='🟡 <b>Firebase tersambung hanya di perangkat ini.</b> Jangan gunakan multiplayer kelas sebelum config dipasang di <code>firebase-config.js</code> GitHub.';
+    }
   }catch(err){
     console.error(err); status.textContent='🔴 Firebase gagal terhubung: '+err.message;
   }
 }
-async function requireCloud(){ if(!cloud.ready){ await initCloud(); } if(!cloud.ready) throw new Error('Firebase belum dikonfigurasi.'); }
+async function requireCloud(){ if(!cloud.ready){ await initCloud(); } if(!cloud.ready) throw new Error('Firebase belum siap. Periksa status koneksi di halaman utama.'); }
 function cleanupListeners(){ if(roomUnsub){roomUnsub();roomUnsub=null;} if(dashUnsub){dashUnsub();dashUnsub=null;} }
 
 // ---------- Navigation ----------
