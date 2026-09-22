@@ -1,3 +1,7 @@
+# Quick Start
+
+Untuk mengaktifkan Room Code + Live Score, baca **SETUP_ONLINE.md**. Versi terbaru juga menyediakan tombol **SETUP ONLINE** langsung di halaman utama.
+
 # THINKERY CLASSROOM TYCOON™ — Online Classroom
 
 Web game edukasi berbasis **HTML + CSS + Vanilla JavaScript** dengan:

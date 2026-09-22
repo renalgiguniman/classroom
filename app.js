@@ -8,7 +8,8 @@ const LS = {
   lastRoom: 'classroomTycoonLastRoom',
   playerName: 'classroomTycoonPlayerName',
   cache: 'classroomTycoonGameCache',
-  sound: 'classroomTycoonSound'
+  sound: 'classroomTycoonSound',
+  firebaseConfig: 'classroomTycoonFirebaseConfig'
 };
 
 const defaultSettings = { easyReward:25000, mediumReward:50000, hardReward:100000, startingCash:100000, eventChance:.22 };
@@ -71,14 +72,43 @@ function closeModal(){ $('modal-root').innerHTML=''; }
 function byId(selector){ return document.querySelector(selector); }
 
 // ---------- Firebase ----------
-function configLooksValid(){
-  const c=window.CLASSROOM_TYCOON_FIREBASE_CONFIG||{};
-  return c.apiKey && !String(c.apiKey).includes('PASTE_') && c.projectId && !String(c.projectId).includes('PASTE_') && c.databaseURL;
+function effectiveFirebaseConfig(){
+  const fileConfig=window.CLASSROOM_TYCOON_FIREBASE_CONFIG||{};
+  if(configLooksValid(fileConfig)) return fileConfig;
+  const saved=loadJSON(LS.firebaseConfig,{});
+  return configLooksValid(saved) ? saved : {};
+}
+function configLooksValid(c=effectiveFirebaseConfig()){
+  return !!(c && c.apiKey && !String(c.apiKey).includes('PASTE_') && c.projectId && !String(c.projectId).includes('PASTE_') && c.databaseURL && c.appId);
+}
+function parseFirebaseConfig(text){
+  const keys=['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId','measurementId'];
+  const out={};
+  for(const key of keys){
+    const re=new RegExp(key+'\\s*:\\s*[\"\']([^\"\']+)[\"\']','i');
+    const m=String(text||'').match(re); if(m) out[key]=m[1].trim();
+  }
+  return out;
+}
+function openFirebaseSetup(){
+  const current=effectiveFirebaseConfig();
+  const sample=current.apiKey?JSON.stringify(current,null,2):'';
+  modal('⚙️ Setup Online Classroom',`<p>Tempel <b>Firebase Web App config</b> dari Firebase Console. Config web Firebase berisi identifier project, bukan service-account secret.</p>
+    <ol style="line-height:1.7"><li>Buat Firebase Project + Web App.</li><li>Aktifkan <b>Authentication → Anonymous</b>.</li><li>Buat <b>Realtime Database</b>, lalu salin ulang Web App config agar <code>databaseURL</code> ikut ada.</li><li>Tempel config di bawah, lalu klik Save.</li></ol>
+    <label>Firebase config<textarea id="firebase-config-paste" rows="12" placeholder='const firebaseConfig = { apiKey: "...", authDomain: "...", databaseURL: "https://...firebasedatabase.app", projectId: "...", appId: "..." };'>${esc(sample)}</textarea></label>
+    <div class="button-row"><button class="btn primary" id="firebase-config-save">SAVE & RELOAD</button><button class="btn outline" id="firebase-config-clear">CLEAR SAVED CONFIG</button></div>
+    <p class="setup-note">Security Rules tetap harus dipasang dari file <code>database.rules.json</code> pada project ini.</p>`);
+  $('firebase-config-save').onclick=()=>{
+    const cfg=parseFirebaseConfig($('firebase-config-paste').value);
+    if(!configLooksValid(cfg)) return toast('Config belum lengkap. Pastikan apiKey, projectId, databaseURL, dan appId ada.');
+    saveJSON(LS.firebaseConfig,cfg); toast('Firebase config saved. Reloading...'); setTimeout(()=>location.reload(),500);
+  };
+  $('firebase-config-clear').onclick=()=>{localStorage.removeItem(LS.firebaseConfig);toast('Saved config dihapus.');setTimeout(()=>location.reload(),500);};
 }
 async function initCloud(){
   const status=$('firebase-status');
   if(!configLooksValid()){
-    status.innerHTML='⚙️ <b>Online mode belum diaktifkan.</b> Isi <code>firebase-config.js</code>. Mode offline tetap bisa dimainkan.';
+    status.innerHTML='⚙️ <b>Online Classroom belum terhubung.</b> Klik <b>SETUP ONLINE</b>, lalu tempel Firebase Web App config.';
     $('btn-create-room').disabled=true; $('btn-join-room').disabled=true; return;
   }
   try{
@@ -92,7 +122,7 @@ async function initCloud(){
       getAuth=authMod.getAuth; signInAnonymously=authMod.signInAnonymously; onAuthStateChanged=authMod.onAuthStateChanged;
       getDatabase=dbMod.getDatabase; ref=dbMod.ref; set=dbMod.set; get=dbMod.get; update=dbMod.update; remove=dbMod.remove; onValue=dbMod.onValue; onDisconnect=dbMod.onDisconnect; serverTimestamp=dbMod.serverTimestamp;
     }
-    cloud.app=initializeApp(window.CLASSROOM_TYCOON_FIREBASE_CONFIG);
+    cloud.app=initializeApp(effectiveFirebaseConfig());
     cloud.auth=getAuth(cloud.app); cloud.db=getDatabase(cloud.app);
     await signInAnonymously(cloud.auth);
     await new Promise(resolve=>{
@@ -108,6 +138,7 @@ function cleanupListeners(){ if(roomUnsub){roomUnsub();roomUnsub=null;} if(dashU
 
 // ---------- Navigation ----------
 document.querySelectorAll('[data-go]').forEach(btn=>btn.addEventListener('click',()=>show(btn.dataset.go)));
+$('btn-online-setup')?.addEventListener('click',openFirebaseSetup);
 $('btn-create-room').addEventListener('click',async()=>{try{await requireCloud();show('create-room')}catch(e){toast(e.message)}});
 $('btn-join-room').addEventListener('click',async()=>{try{await requireCloud();$('join-name').value=localStorage.getItem(LS.playerName)||'';show('join-room')}catch(e){toast(e.message)}});
 $('btn-start-offline').addEventListener('click',startOffline);
