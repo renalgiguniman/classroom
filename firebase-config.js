@@ -1,11 +1,9 @@
-// Isi object ini dengan Firebase Web App config milik Anda.
-// Firebase Console > Project Settings > Your apps > Web app > SDK setup and configuration.
 window.CLASSROOM_TYCOON_FIREBASE_CONFIG = {
-  apiKey: "PASTE_API_KEY_HERE",
-  authDomain: "PASTE_PROJECT.firebaseapp.com",
-  databaseURL: "https://PASTE_PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "PASTE_PROJECT",
-  storageBucket: "PASTE_PROJECT.firebasestorage.app",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyCCCH8y_fcx3NmkeOjxwiseUNFPsSojqJo",
+  authDomain: "classrom-28f1d.firebaseapp.com",
+  databaseURL: "https://classrom-28f1d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "classrom-28f1d",
+  storageBucket: "classrom-28f1d.firebasestorage.app",
+  messagingSenderId: "233261556548",
+  appId: "1:233261556548:web:6a658165dd1e995b14ad11"
 };
