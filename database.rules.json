@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostId').val() === auth.uid) || (data.exists() && data.child('hostId').val() === auth.uid))",
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($room).child('hostId').val() === auth.uid)",
+            ".validate": "!newData.exists() || (newData.child('name').isString() && newData.child('cash').isNumber() && newData.child('xp').isNumber() && newData.child('streak').isNumber() && newData.child('correct').isNumber() && newData.child('wrong').isNumber() && newData.child('round').isNumber() && newData.child('businessValue').isNumber() && newData.child('netWorth').isNumber())"
+          }
+        }
+      }
+    }
+  }
+}

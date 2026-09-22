@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>Thinkery Classroom Tycoon™</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="site-header">
+      <div class="brand"><span class="brand-mark">T</span><div><strong>THINKERY</strong><small>CLASSROOM TYCOON™</small></div></div>
+      <div class="header-actions">
+        <span id="net-pill" class="pill neutral">● ONLINE</span>
+        <button class="icon-btn" id="sound-toggle" title="Sound">🔊</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- HOME -->
+      <section class="screen active" id="screen-home">
+        <div class="hero-wrap">
+          <div class="hero-copy">
+            <span class="eyebrow">🎓 EDUCATIONAL BUSINESS SIMULATION</span>
+            <h1>CLASSROOM<br><span>TYCOON™</span></h1>
+            <p>Jawab soal, dapatkan uang, bangun bisnis, dan bersaing secara live dengan teman satu kelas.</p>
+            <div class="action-stack">
+              <button class="btn primary" data-go="offline-setup">▶ PLAY OFFLINE</button>
+              <button class="btn cyan" id="btn-create-room">🌐 CREATE ONLINE ROOM</button>
+              <button class="btn outline" id="btn-join-room">🔑 JOIN ROOM</button>
+              <button class="btn soft" data-go="teacher">🧑‍🏫 TEACHER MODE</button>
+            </div>
+            <div id="firebase-status" class="setup-note"></div>
+          </div>
+          <div class="hero-city card-city">
+            <div class="sun"></div><div class="cloud cloud-a"></div><div class="cloud cloud-b"></div>
+            <div class="skyline"><div class="bld sm"></div><div class="bld md"></div><div class="bld lg"></div><div class="bld xl"></div></div>
+            <div class="road"></div><span class="city-tag">BUILD • LEARN • GROW</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- OFFLINE SETUP -->
+      <section class="screen" id="screen-offline-setup">
+        <div class="page-head"><div><span class="eyebrow">OFFLINE MODE</span><h2>Game Setup</h2></div><button class="btn outline" data-go="home">← Back</button></div>
+        <div class="panel form-panel">
+          <div class="form-grid">
+            <label>Team / Player Name<input id="offline-name" value="Team Alpha" /></label>
+            <label>Jumlah Soal<select id="offline-count"><option>10</option><option selected>15</option><option>20</option><option>25</option></select></label>
+            <label>Difficulty<select id="offline-diff"><option value="mixed">Mixed</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></label>
+            <label>Starting Cash<input id="offline-cash" type="number" value="100000" min="0" /></label>
+          </div>
+          <button class="btn primary" id="btn-start-offline">START GAME →</button>
+        </div>
+      </section>
+
+      <!-- CREATE ROOM -->
+      <section class="screen" id="screen-create-room">
+        <div class="page-head"><div><span class="eyebrow">TEACHER HOST</span><h2>Create Online Room</h2></div><button class="btn outline" data-go="home">← Back</button></div>
+        <div class="panel form-panel">
+          <div class="form-grid">
+            <label>Nama Kelas / Host<input id="host-name" value="Mr. reii's Class" /></label>
+            <label>Jumlah Soal<select id="host-count"><option>10</option><option selected>15</option><option>20</option><option>25</option></select></label>
+            <label>Difficulty<select id="host-diff"><option value="mixed">Mixed</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></label>
+            <label>Starting Cash<input id="host-cash" type="number" value="100000" min="0" /></label>
+            <label>Max Players<select id="host-cap"><option>10</option><option>20</option><option selected>30</option><option>40</option></select></label>
+            <label>Room Type<select><option>Self-Paced Live Classroom</option></select></label>
+          </div>
+          <button class="btn cyan" id="btn-confirm-create">GENERATE ROOM CODE</button>
+        </div>
+      </section>
+
+      <!-- JOIN ROOM -->
+      <section class="screen" id="screen-join-room">
+        <div class="page-head"><div><span class="eyebrow">STUDENT / TEAM</span><h2>Join Classroom</h2></div><button class="btn outline" data-go="home">← Back</button></div>
+        <div class="panel narrow">
+          <label>Room Code<input id="join-code" maxlength="6" placeholder="A7K9PX" class="code-input" /></label>
+          <label>Team / Player Name<input id="join-name" placeholder="Kelompok 1" /></label>
+          <button class="btn primary full" id="btn-confirm-join">JOIN GAME</button>
+        </div>
+      </section>
+
+      <!-- HOST LOBBY -->
+      <section class="screen" id="screen-host-lobby">
+        <div class="page-head"><div><span class="eyebrow">LIVE ROOM</span><h2 id="host-room-title">Room</h2></div><button class="btn danger" id="btn-close-room">END ROOM</button></div>
+        <div class="room-grid">
+          <div class="panel room-code-card"><small>ROOM CODE</small><strong id="host-room-code">------</strong><button class="btn outline small-btn" id="btn-copy-code">COPY CODE</button><p>Bagikan kode ini kepada siswa.</p></div>
+          <div class="panel"><div class="stat-row"><span>Players Joined</span><strong id="host-player-count">0</strong></div><div class="stat-row"><span>Status</span><strong id="host-room-status">WAITING</strong></div><button class="btn success full" id="btn-host-start">START GAME</button></div>
+        </div>
+        <div class="panel"><h3>Players</h3><div id="host-player-list" class="player-list"></div></div>
+      </section>
+
+      <!-- STUDENT LOBBY -->
+      <section class="screen" id="screen-student-lobby">
+        <div class="waiting-card panel">
+          <div class="spinner"></div><span class="eyebrow">WAITING ROOM</span><h2 id="student-room-code">ROOM ------</h2><p>Menunggu guru memulai permainan...</p>
+          <div id="student-lobby-list" class="player-list"></div>
+          <button class="btn outline" id="btn-leave-room">LEAVE ROOM</button>
+        </div>
+      </section>
+
+      <!-- GAME -->
+      <section class="screen" id="screen-game">
+        <div class="game-topbar">
+          <div class="mini-stat"><small>TEAM</small><strong id="g-name">-</strong></div>
+          <div class="mini-stat"><small>💰 CASH</small><strong id="g-cash">Rp0</strong></div>
+          <div class="mini-stat"><small>🏢 VALUE</small><strong id="g-value">Rp0</strong></div>
+          <div class="mini-stat"><small>📈 INCOME</small><strong id="g-income">Rp0</strong></div>
+          <div class="mini-stat"><small>🔥 STREAK</small><strong id="g-streak">0</strong></div>
+          <div class="mini-stat"><small>QUESTION</small><strong id="g-round">1/15</strong></div>
+          <button class="btn outline small-btn" id="btn-live-score">🏆 LIVE SCORE</button>
+        </div>
+        <div class="game-grid">
+          <div class="panel question-panel">
+            <div class="question-tags"><span id="q-diff" class="tag">EASY</span><span id="q-reward" class="tag green">💰 Rp25.000</span><span id="q-live" class="tag blue">OFFLINE</span></div>
+            <h2 id="q-text">Question</h2>
+            <div id="q-options" class="answer-grid"></div>
+            <div id="q-feedback" class="feedback hidden"></div>
+            <button id="btn-q-continue" class="btn primary hidden">CONTINUE →</button>
+          </div>
+          <aside>
+            <div class="card-city game-city"><div class="sun"></div><div id="game-skyline" class="skyline"><div class="bld sm"></div></div><div class="road"></div><span id="city-stage" class="city-tag">Street Stall</span></div>
+            <div class="panel progress-panel"><div><strong>TYCOON PROGRESS</strong><span id="city-progress-label">1/7</span></div><div class="progress"><i id="city-progress"></i></div><small>🛒 → 🏪 → ☕ → 🍽️ → 🏬 → 🏢 → 🏙️</small></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- BUSINESS -->
+      <section class="screen" id="screen-business">
+        <div class="page-head"><div><span class="eyebrow">BUSINESS DECISION</span><h2>Build Your Empire</h2></div><div class="button-row"><button class="btn outline" id="btn-open-shop">🛍️ TYCOON SHOP</button><button class="btn primary" id="btn-next-round">NEXT ROUND →</button></div></div>
+        <div class="metrics" id="business-metrics"></div>
+        <div id="business-list" class="business-grid"></div>
+      </section>
+
+      <!-- HOST DASHBOARD -->
+      <section class="screen" id="screen-host-dashboard">
+        <div class="page-head"><div><span class="eyebrow">TEACHER LIVE DASHBOARD</span><h2 id="dash-room">Live Room</h2></div><button class="btn danger" id="btn-end-game">END GAME</button></div>
+        <div class="metrics"><div class="metric"><small>PLAYERS</small><strong id="dash-players">0</strong></div><div class="metric"><small>FINISHED</small><strong id="dash-finished">0</strong></div><div class="metric"><small>AVG ACCURACY</small><strong id="dash-accuracy">0%</strong></div><div class="metric"><small>STATUS</small><strong id="dash-status">PLAYING</strong></div></div>
+        <div class="panel table-wrap"><table><thead><tr><th>#</th><th>Team</th><th>Progress</th><th>Correct</th><th>Accuracy</th><th>Cash</th><th>Business</th><th>Net Worth</th><th>Status</th></tr></thead><tbody id="dash-table"></tbody></table></div>
+      </section>
+
+      <!-- RESULT -->
+      <section class="screen" id="screen-result">
+        <div class="result-card panel"><div class="trophy">🏆</div><span class="eyebrow">TYCOON RESULTS</span><h2 id="result-title">RISING ENTREPRENEUR</h2><p id="result-name">Team Alpha</p><div class="metrics" id="result-metrics"></div><button class="btn primary" data-go="home">MAIN MENU</button></div>
+      </section>
+
+      <!-- TEACHER MODE -->
+      <section class="screen" id="screen-teacher">
+        <div class="page-head"><div><span class="eyebrow">QUESTION BUILDER</span><h2>Teacher Mode</h2></div><button class="btn outline" data-go="home">← Back</button></div>
+        <div class="teacher-grid">
+          <div class="panel">
+            <h3 id="editor-heading">Add Question</h3>
+            <input id="edit-id" type="hidden" />
+            <label>Question<textarea id="ed-question" rows="3"></textarea></label>
+            <div class="form-grid compact"><label>A<input id="ed-a" /></label><label>B<input id="ed-b" /></label><label>C<input id="ed-c" /></label><label>D<input id="ed-d" /></label><label>Correct<select id="ed-answer"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label><label>Difficulty<select id="ed-diff"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></label><label>Reward<input id="ed-reward" type="number" value="25000" /></label><label>Explanation<input id="ed-exp" /></label></div>
+            <div class="button-row"><button class="btn primary" id="btn-save-question">SAVE</button><button class="btn outline" id="btn-clear-question">CLEAR</button></div>
+          </div>
+          <div class="panel"><div class="panel-head"><h3>Question Bank</h3><span id="teacher-q-count" class="tag">0 Questions</span></div><div id="teacher-question-list" class="question-list"></div></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="modal-root"></div>
+    <div id="toast" class="toast hidden"></div>
+  </div>
+  <script src="firebase-config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
